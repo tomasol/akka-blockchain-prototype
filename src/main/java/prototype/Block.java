@@ -4,16 +4,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Block {
+public class Block implements Serializable {
 
-    private final Transaction transaction;
+    private final BlockchainTransaction transaction;
     private final String nonce;
     private final String parentHash;
 
     @JsonCreator
-    public Block(@JsonProperty("transaction") Transaction transaction, @JsonProperty("nonce") String nonce,
+    public Block(@JsonProperty("transaction") BlockchainTransaction transaction, @JsonProperty("nonce") String nonce,
                  @JsonProperty("parentHash") String parentHash) {
         this.transaction = checkNotNull(transaction);
         this.nonce = checkNotNull(nonce);
@@ -21,7 +22,7 @@ public class Block {
     }
 
     public static Block createInitialBlock(String address, int amount) {
-        Transaction transaction = new Transaction("", address, amount);
+        BlockchainTransaction transaction = new BlockchainTransaction("", address, amount);
         return new Block(transaction, "", "");
     }
 
@@ -29,7 +30,7 @@ public class Block {
         return new Block(transaction, nonce, parentHash);
     }
 
-    public Transaction getTransaction() {
+    public BlockchainTransaction getTransaction() {
         return transaction;
     }
 

@@ -1,12 +1,8 @@
 package prototype;
 
 import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.get;
-import static akka.http.javadsl.server.Directives.getFromResource;
 import static akka.http.javadsl.server.Directives.parameter;
 import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.pathPrefix;
-import static akka.http.javadsl.server.Directives.reject;
 import static akka.http.javadsl.server.Directives.route;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -14,27 +10,31 @@ import akka.actor.ActorSystem;
 import akka.http.javadsl.ConnectHttp;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.marshallers.jackson.Jackson;
-import akka.http.javadsl.model.StatusCode;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.Route;
 import akka.http.javadsl.unmarshalling.StringUnmarshallers;
 import akka.stream.ActorMaterializer;
 import akka.stream.Materializer;
-import java.io.IOException;
-import java.net.InetAddress;
 import java.util.function.Supplier;
 
-public class BlockchainServer implements AutoCloseable {
+public class BlockchainWebServer implements AutoCloseable {
     private final BlockchainController blockchainController;
-    private final InetAddress inetAddress;
-    private final int httpPort;
+    private final String listeningHost;
+    private final int listeningHttpPort;
     private final ActorSystem system;
 
-    public BlockchainServer(BlockchainController blockchainController, InetAddress inetAddress, int httpPort) {
+    public BlockchainWebServer(BlockchainController blockchainController, String listeningHost, int listeningHttpPort) {
         this.blockchainController = checkNotNull(blockchainController);
-        this.httpPort = httpPort;
-        this.inetAddress = inetAddress;
+        this.listeningHttpPort = listeningHttpPort;
+        this.listeningHost = listeningHost;
         this.system = ActorSystem.create();
+
+        final Materializer materializer = ActorMaterializer.create(system);
+        Http http = Http.get(system);
+
+        ConnectHttp connectHttp = ConnectHttp.toHost(listeningHost, listeningHttpPort);
+        http.bindAndHandle(createRoute().flow(system, materializer), connectHttp, materializer);
+        System.err.println("Server online at http://" + listeningHost + ":" + listeningHttpPort);
     }
 
     private Route createRoute() {
@@ -50,13 +50,13 @@ public class BlockchainServer implements AutoCloseable {
                 parameter(StringUnmarshallers.STRING, "from", from ->
                         parameter(StringUnmarshallers.STRING, "to", to ->
                                 parameter(StringUnmarshallers.INTEGER, "amount", amount -> {
-                                            Transaction transaction = new Transaction(from, to, amount);
-                                            Block block = new Block(transaction, "", blockchainController.getTopmostHash());
-                                            block = CryptoUtils.computeValidBlock(block::withNonce,
-                                                    blockchainController.getDifficulty());
-                                            blockchainController.addBlock(block);
-                                            return complete(StatusCodes.OK);
-                                        })));
+                                    BlockchainTransaction transaction = new BlockchainTransaction(from, to, amount);
+                                    Block block = new Block(transaction, "", blockchainController.getTopmostHash());
+                                    block = CryptoUtils.computeValidBlock(block::withNonce,
+                                            blockchainController.getDifficulty());
+                                    blockchainController.addBlock(block);
+                                    return complete(StatusCodes.OK);
+                                })));
 
         return route(
                 path("getChain", getChain),
@@ -64,19 +64,6 @@ public class BlockchainServer implements AutoCloseable {
                 path("send", send),
                 path("getStatus", () -> complete(StatusCodes.OK))
         );
-    }
-
-    public void start() throws IOException {
-        try {
-            final Materializer materializer = ActorMaterializer.create(system);
-            Http http = Http.get(system);
-
-            ConnectHttp connectHttp = ConnectHttp.toHost(inetAddress.getHostAddress(), httpPort);
-            http.bindAndHandle(createRoute().flow(system, materializer), connectHttp, materializer);
-            System.out.println("Server online at http://" + inetAddress.getHostAddress() + ":" + httpPort);
-        } catch (RuntimeException e) {
-            system.terminate();
-        }
     }
 
     @Override

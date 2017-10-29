@@ -6,21 +6,20 @@
     <artifactId>akka-blockchain-prototype</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
+    <properties>
+        <akka.version>2.5.6</akka.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-actor_2.12</artifactId>
-            <version>2.5.3</version>
-        </dependency>
-        <dependency>
-            <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-testkit_2.12</artifactId>
-            <version>2.5.3</version>
+            <version>${akka.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-stream_2.12</artifactId>
-            <version>2.5.4</version> <!-- Or whatever the latest version is -->
+            <version>${akka.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
@@ -33,9 +32,21 @@
             <version>10.0.10</version>
         </dependency>
         <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-cluster_2.12</artifactId>
+            <version>${akka.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>23.3-jre</version>
+        </dependency>
+        <!-- test scope -->
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-testkit_2.12</artifactId>
+            <version>${akka.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -62,7 +73,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>prototype.PrototypeMain</mainClass>
+                            <mainClass>prototype.SingleNodeMain</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -81,7 +92,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>prototype.PrototypeMain</mainClass>
+                    <mainClass>prototype.SingleNodeMain</mainClass>
                 </configuration>
             </plugin>
 

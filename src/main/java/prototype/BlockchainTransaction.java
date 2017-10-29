@@ -1,20 +1,20 @@
 package prototype;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Transaction {
+public class BlockchainTransaction implements Serializable {
 
     private final String from;
     private final String to;
     private final int amount;
 
     @JsonCreator
-    public Transaction(@JsonProperty("from") String from, @JsonProperty("to") String to, @JsonProperty("amount") int amount) {
+    public BlockchainTransaction(@JsonProperty("from") String from, @JsonProperty("to") String to, @JsonProperty("amount") int amount) {
         this.from = checkNotNull(from);
         this.to = checkNotNull(to);
         this.amount = amount;
@@ -47,7 +47,7 @@ public class Transaction {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Transaction transaction = (Transaction) o;
+        BlockchainTransaction transaction = (BlockchainTransaction) o;
         return amount == transaction.amount &&
                 Objects.equals(from, transaction.from) &&
                 Objects.equals(to, transaction.to);

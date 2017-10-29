@@ -19,11 +19,11 @@ public class SimpleTest {
     private final String bob = "Bob";
     private final Block initialBlock = Block.createInitialBlock(alice, 100);
     private final int httpPort = 8080;
-    private final InetAddress loopback = InetAddress.getLoopbackAddress();
+    private final String loopback = InetAddress.getLoopbackAddress().getHostAddress();
     private final int difficulty = 5;
 
     BlockchainController blockchainController;
-    BlockchainServer server;
+    BlockchainWebServer server;
     BlockchainClient client;
 
     @Rule
@@ -32,8 +32,7 @@ public class SimpleTest {
     @Before
     public void setUp() throws IOException {
         blockchainController = new BlockchainController(initialBlock, difficulty);
-        server = new BlockchainServer(blockchainController, loopback, httpPort);
-        server.start();
+        server = new BlockchainWebServer(blockchainController, loopback, httpPort);
         client = new BlockchainClient(loopback, httpPort);
         assertTrue(client.isUp());
     }
