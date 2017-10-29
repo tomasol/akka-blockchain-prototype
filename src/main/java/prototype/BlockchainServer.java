@@ -49,17 +49,20 @@ public class BlockchainServer implements AutoCloseable {
         Supplier<Route> send = () ->
                 parameter(StringUnmarshallers.STRING, "from", from ->
                         parameter(StringUnmarshallers.STRING, "to", to ->
-                        parameter(StringUnmarshallers.INTEGER, "amount", amount -> {
-                                Block block = new Block(from, to, amount);
-                            blockchainController.addBlock(block);
-                            return complete(StatusCodes.OK);
-                        })));
+                                parameter(StringUnmarshallers.INTEGER, "amount", amount -> {
+                                            Transaction transaction = new Transaction(from, to, amount);
+                                            Block block = new Block(transaction, "", blockchainController.getTopmostHash());
+                                            block = CryptoUtils.computeValidBlock(block::withNonce,
+                                                    blockchainController.getDifficulty());
+                                            blockchainController.addBlock(block);
+                                            return complete(StatusCodes.OK);
+                                        })));
 
         return route(
                 path("getChain", getChain),
                 path("getBalance", getBalance),
                 path("send", send),
-                get(() -> complete(StatusCodes.OK))
+                path("getStatus", () -> complete(StatusCodes.OK))
         );
     }
 
@@ -68,9 +71,9 @@ public class BlockchainServer implements AutoCloseable {
             final Materializer materializer = ActorMaterializer.create(system);
             Http http = Http.get(system);
 
-            ConnectHttp connectHttp = ConnectHttp.toHost("127.0.0.1", httpPort);
+            ConnectHttp connectHttp = ConnectHttp.toHost(inetAddress.getHostAddress(), httpPort);
             http.bindAndHandle(createRoute().flow(system, materializer), connectHttp, materializer);
-            System.out.println("Server online at http://" + inetAddress.getHostName() + ":" + httpPort);
+            System.out.println("Server online at http://" + inetAddress.getHostAddress() + ":" + httpPort);
         } catch (RuntimeException e) {
             system.terminate();
         }

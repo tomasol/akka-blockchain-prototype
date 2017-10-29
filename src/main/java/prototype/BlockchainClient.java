@@ -75,7 +75,7 @@ public class BlockchainClient implements AutoCloseable {
 
     public boolean isUp() {
         try {
-            getSuccessfulResponse(urlPrefixWithoutSlash);
+            getSuccessfulResponse(urlPrefixWithoutSlash + "/getStatus");
             return true;
         } catch (IllegalStateException e) {
             return false;
